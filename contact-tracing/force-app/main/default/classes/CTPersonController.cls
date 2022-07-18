@@ -1,5 +1,4 @@
 public with sharing class CTPersonController {
-    public CTPersonController() { }
 
     public static String getToken(String mobile){
         //generate unique hash using md5 algorithm https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_classes_restful_crypto.htm
@@ -7,5 +6,30 @@ public with sharing class CTPersonController {
         Blob hash = Crypto.generateDigest('MD5', targetBlob);
         // Converts a Blob to an unencoded String representing its normal form. https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_classes_restful_encodingUtil.htm#apex_System_EncodingUtil_base64Encode
         return EncodingUtil.base64Encode(hash);
+    }
+
+    public static List<Person__c> getRecentHealthChanges(){
+        return [SELECT Id, Name, Health_Status__c, Mobile__c, Status_Update_Date__c, Token__c FROM Person__c ORDER BY Status_Update_Date__c DESC NULLS LAST LIMIT 100];
+    }
+
+    public static List<Person__c> searchPeople(String searchTerm){
+        // appending the wild card
+        searchTerm = searchTerm + '%';
+        return [SELECT Id, Name, Health_Status__c, Mobile__c, Status_Update_Date__c, Token__c
+            FROM Person__c
+            WHERE Name LIKE :searchTerm
+                OR Mobile__c LIKE :searchTerm
+                OR Token__c LIKE :searchTerm
+            ORDER BY Status_Update_Date__c DESC NULLS LAST];
+    }
+
+    public static Person__c getPersonById(String personId){
+        List<Person__c> people = [SELECT Id, Name, Health_Status__c, Mobile__c, Status_Update_Date__c, Token__c
+                FROM Person__c
+                WHERE Id =:personId];
+        if(people != null && people.size() > 0){
+            return people[0];
+        }
+        return null;
     }
 }
